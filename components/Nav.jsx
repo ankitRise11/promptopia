@@ -12,11 +12,31 @@ const Nav = () => {
   const [toggleDropdown, setToggleDropdown] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const res = await getProviders();
-      setProviders(res);
-    })();
+    const storedProviders = localStorage.getItem("providers");
+    if (storedProviders) {
+      setProviders(JSON.parse(storedProviders));
+    } else {
+      fetchProviders();
+    }
+    const removeLocalStorage = setTimeout(() => {
+      localStorage.removeItem("providers");
+    }, 24 * 60 * 60 * 1000);
+
+    return () => {
+      clearTimeout(removeLocalStorage);
+    };
   }, []);
+
+  const fetchProviders = async () => {
+    const res = await getProviders();
+    setProviders(res);
+    localStorage.setItem("providers", JSON.stringify(res));
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    localStorage.removeItem("providers");
+  };
 
   return (
     <nav className="flex-between w-full mb-16 pt-3">
@@ -123,6 +143,7 @@ const Nav = () => {
                   key={provider.name}
                   onClick={() => {
                     signIn(provider.id);
+                    handleSignOut;
                   }}
                   className="black_btn"
                 >
